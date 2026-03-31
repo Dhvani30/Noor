@@ -1,0 +1,34 @@
+[
+  {
+    "title": "Women's Safety",
+    "subtitle": "National Helpline",
+    "phoneNumber": "181",
+    "icon": "doc_text_fill",
+    "lightColors": ["#FFF7EBEF", "#FFF5DCE7"],
+    "darkColors": ["#FF2A1B1B", "#FF2A1B1B"]
+  },
+  {
+    "title": "Child Safety",
+    "subtitle": "Report abuse",
+    "phoneNumber": "1098",
+    "icon": "person_crop_circle_badge_exclam",
+    "lightColors": ["#FFDFF3FF", "#FFE6F0FA"],
+    "darkColors": ["#FF1B2A3A", "#FF1B2A3A"]
+  },
+  {
+    "title": "Medical Help",
+    "subtitle": "Ambulance",
+    "phoneNumber": "108",
+    "icon": "heart_fill",
+    "lightColors": ["#FFE8FFF3", "#FFDFF5EA"],
+    "darkColors": ["#FF1B2A25", "#FF1B2A25"]
+  },
+  {
+    "title": "Legal Support",
+    "subtitle": "Free legal aid",
+    "phoneNumber": "15100",
+    "icon": "doc_text_fill",
+    "lightColors": ["#FFFFF1DF", "#FFF5E9DC"],
+    "darkColors": ["#FF2A251B", "#FF2A251B"]
+  }
+]
