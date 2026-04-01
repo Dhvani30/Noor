@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:noor_new/screens/mapbox_safe_route.dart';
-import 'package:noor_new/screens/mapbox_safe_route.dart'; // ✅ Updated import
 import 'package:noor_new/screens/fake_call_setup.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart' show launchUrl, canLaunchUrl;
+import 'widgets/animated_bottom_nav.dart'; // ✅ Updated import
 import 'widgets/emergency_card.dart';
 import 'news_page.dart';
 import 'circle_page.dart';
 import 'profile_page.dart';
 import 'dart:convert';
 import 'package:noor_new/services/sos_service.dart';
-import 'package:geolocator/geolocator.dart'; // ✅ Removed latlong2 (not needed here)
-import 'news_page.dart';
+import 'package:geolocator/geolocator.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -30,41 +30,33 @@ class _HomePageState extends State<HomePage> {
     const ProfilePage(),
   ];
 
+  // ✅ Define navigation items
+  final List<NavItem> _navItems = [
+    NavItem(icon: CupertinoIcons.house, label: 'Home'),
+    NavItem(icon: CupertinoIcons.compass, label: 'Explore'),
+    NavItem(icon: CupertinoIcons.person_2, label: 'Circle'),
+    NavItem(icon: CupertinoIcons.person, label: 'Profile'),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Theme.of(context).colorScheme.background,
+
+      // ✅ Custom Animated Bottom Navigation
+      bottomNavigationBar: AnimatedBottomNav(
         currentIndex: _currentIndex,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
         onTap: (index) {
           setState(() {
             _currentIndex = index;
           });
         },
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.house),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.compass),
-            label: 'Explore',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.person_2),
-            label: 'Circle',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.person),
-            label: 'Profile',
-          ),
-        ],
+        items: _navItems,
       ),
+
+      // ✅ Allow body to extend behind the navigation
+      extendBody: true,
     );
   }
 }
@@ -80,11 +72,9 @@ class HomePageContent extends StatelessWidget {
           desiredAccuracy: LocationAccuracy.high,
           timeLimit: const Duration(seconds: 5),
         );
-        // ✅ FIXED: Removed extra spaces in Google Maps URL
         locationLink =
             'https://maps.google.com/?q=${position.latitude},${position.longitude}';
       } catch (e) {
-        // Location is optional - SOS still works without it
         debugPrint('⚠️ Location not available for SOS: $e');
       }
 
@@ -111,7 +101,6 @@ class HomePageContent extends StatelessWidget {
     }
   }
 
-  // Load emergency cards from JSON
   Future<List<Widget>> _loadEmergencyCards(BuildContext context) async {
     try {
       final jsonString = await rootBundle.loadString(
@@ -136,7 +125,6 @@ class HomePageContent extends StatelessWidget {
       }).toList();
     } catch (e) {
       debugPrint('❌ Error loading emergency cards: $e');
-      // Return empty list if JSON fails to load
       return [];
     }
   }
@@ -176,7 +164,6 @@ class HomePageContent extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // JSON-LOADED EMERGENCY CARDS
               Container(
                 clipBehavior: Clip.none,
                 height: 178,
@@ -206,7 +193,6 @@ class HomePageContent extends StatelessWidget {
 
               const SizedBox(height: 48),
 
-              // 🚨 SOS Button
               Center(
                 child: Column(
                   children: [
@@ -216,7 +202,6 @@ class HomePageContent extends StatelessWidget {
                         _callSOS(context);
                       },
                       onLongPress: () {
-                        // Optional: Show SOS instructions on long press
                         showDialog(
                           context: context,
                           builder: (_) => AlertDialog(
@@ -290,7 +275,6 @@ class HomePageContent extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // 📞 Fake Call Button
               Center(
                 child: Column(
                   children: [
@@ -365,7 +349,6 @@ class HomePageContent extends StatelessWidget {
 
               const SizedBox(height: 48),
 
-              // 🗺️ Safe Route Planner - UPDATED TO USE MAPBOX
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -390,8 +373,7 @@ class HomePageContent extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) =>
-                                const MapboxSafeRoute(), // ✅ Updated to new screen
+                            builder: (_) => const MapboxSafeRoute(),
                           ),
                         );
                       },
@@ -405,7 +387,6 @@ class HomePageContent extends StatelessWidget {
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
                       onPressed: () {
-                        // TODO: Add transit routing later
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('🚧 Transit mode coming soon!'),
