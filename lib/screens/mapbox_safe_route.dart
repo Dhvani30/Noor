@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -8,6 +9,7 @@ import 'package:geolocator/geolocator.dart'
     show Geolocator, Position, LocationAccuracy, LocationSettings;
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:noor_new/services/sos_service.dart';
 
 class MapboxSafeRoute extends StatefulWidget {
   const MapboxSafeRoute({super.key});
@@ -44,6 +46,12 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
 
   Timer? _searchTimer;
 
+  StreamSubscription<geo.Position>? _locationSubscription;
+  bool _isJourneyActive = false;
+  double _journeyProgress = 0.0;
+  String? _currentETA;
+  List<geo.Position> _journeyHistory = [];
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +78,7 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
 
   @override
   void dispose() {
+    _locationSubscription?.cancel();
     _sourceController.dispose();
     _destController.dispose();
     _searchTimer?.cancel();
@@ -117,29 +126,28 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
     _moveCamera();
   }
 
-  // ✅ v11 FIX: addOnStyleLoadedListener is replaced by onStyleLoadedListener in MapWidget
-  // or a subscription here. We will use the async style check for _add3DBuildings.
+  // ✅ v11 FIX: Style methods are now async and properties use new naming conventions
   Future<void> _add3DBuildings() async {
     if (mapboxMap == null) return;
     final style = mapboxMap!.style;
 
-    if (!(await style.styleLayerExists('3d-buildings'))) {
+    if (await style.styleLayerExists('3d-buildings')) return;
+
+    try {
       await style.addLayer(
         FillExtrusionLayer(
           id: '3d-buildings',
           sourceId: 'composite',
           sourceLayer: 'building',
-          minZoom: 15.0,
-          // ✅ Set these to null or a default double first to satisfy the compiler
-          fillExtrusionHeight: null,
+          minZoom: 15.0, // Renamed from minzoom
+          fillExtrusionHeight: null, // Apply data-driven property below
           fillExtrusionBase: null,
           fillExtrusionColor: Colors.grey.toARGB32(),
-          fillExtrusionOpacity: 0.6,
+          fillExtrusionOpacity: 0.5,
         ),
       );
 
-      // ✅ Apply the data-driven expressions here
-      // This tells Mapbox to pull 'height' and 'min_height' from the vector tiles
+      // ✅ Use setStyleLayerProperty for dynamic Expressions in v11
       await style.setStyleLayerProperty(
         '3d-buildings',
         'fill-extrusion-height',
@@ -149,6 +157,10 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
         "get",
         "min_height",
       ]);
+
+      debugPrint('✅ 3D buildings layer added');
+    } catch (e) {
+      debugPrint('❌ Failed to add 3D buildings: $e');
     }
   }
 
@@ -247,13 +259,10 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
     if (mapboxMap == null || origin == null) return;
     final style = mapboxMap!.style;
 
-    // ✅ v11 FIX: Async checks and block syntax
-    if (await style.styleLayerExists(_originMarkerId)) {
+    if (await style.styleLayerExists(_originMarkerId))
       await style.removeStyleLayer(_originMarkerId);
-    }
-    if (await style.styleSourceExists(_originMarkerId)) {
+    if (await style.styleSourceExists(_originMarkerId))
       await style.removeStyleSource(_originMarkerId);
-    }
 
     await style.addSource(
       GeoJsonSource(
@@ -283,12 +292,10 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
     if (mapboxMap == null || destination == null) return;
     final style = mapboxMap!.style;
 
-    if (await style.styleLayerExists(_destMarkerId)) {
+    if (await style.styleLayerExists(_destMarkerId))
       await style.removeStyleLayer(_destMarkerId);
-    }
-    if (await style.styleSourceExists(_destMarkerId)) {
+    if (await style.styleSourceExists(_destMarkerId))
       await style.removeStyleSource(_destMarkerId);
-    }
 
     await style.addSource(
       GeoJsonSource(
@@ -319,7 +326,6 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
 
   Future<void> _drawRoute(Point start, Point end) async {
     if (mapboxMap == null || accessToken == null) return;
-    if (!mounted) return;
     setState(() => isLoading = true);
 
     try {
@@ -331,8 +337,6 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
       );
 
       final res = await http.get(url);
-      if (!mounted) return;
-
       final data = jsonDecode(res.body);
       if (data['routes'] == null || data['routes'].isEmpty) return;
 
@@ -346,13 +350,10 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
       });
 
       final style = mapboxMap!.style;
-
-      if (await style.styleLayerExists(_routeLayerId)) {
+      if (await style.styleLayerExists(_routeLayerId))
         await style.removeStyleLayer(_routeLayerId);
-      }
-      if (await style.styleSourceExists(_routeSourceId)) {
+      if (await style.styleSourceExists(_routeSourceId))
         await style.removeStyleSource(_routeSourceId);
-      }
 
       await style.addSource(
         GeoJsonSource(id: _routeSourceId, data: jsonEncode(geometry)),
@@ -370,22 +371,15 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
     } catch (e) {
       debugPrint("Route error: $e");
     } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
   Future<void> _clearRoute() async {
     if (mapboxMap == null) return;
     final style = mapboxMap!.style;
-
-    if (await style.styleLayerExists(_routeLayerId)) {
+    if (await style.styleLayerExists(_routeLayerId))
       await style.removeStyleLayer(_routeLayerId);
-    }
-    if (await style.styleSourceExists(_routeSourceId)) {
-      await style.removeStyleSource(_routeSourceId);
-    }
 
     if (!mounted) return;
     setState(() {
@@ -398,6 +392,192 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
     });
   }
 
+  Future<void> _triggerSOS() async {
+    try {
+      String? locationLink;
+      try {
+        final position = await geo.Geolocator.getCurrentPosition(
+          locationSettings: const geo.LocationSettings(
+            accuracy: geo.LocationAccuracy.high,
+          ),
+          timeLimit: const Duration(seconds: 5),
+        );
+        locationLink =
+            'http://maps.google.com/maps?q=${position.latitude},${position.longitude}';
+      } catch (e) {
+        debugPrint('⚠️ Location not available for SOS: $e');
+      }
+
+      await SOSService.sendSOSSMS(locationLink);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('🚨 SOS alert sent to trusted contacts!'),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ SOS failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _startJourney() {
+    if (!mounted || origin == null || destination == null) return;
+    setState(() {
+      _isJourneyActive = true;
+      _journeyHistory = [];
+      _journeyProgress = 0.0;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('🚶 Journey started! Tracking location...'),
+        backgroundColor: Colors.green,
+        action: SnackBarAction(
+          label: 'Share',
+          textColor: Colors.white,
+          onPressed: _shareCurrentLocation,
+        ),
+      ),
+    );
+
+    _startLocationTracking();
+    _startPeriodicSharing();
+  }
+
+  void _startLocationTracking() {
+    final settings = geo.LocationSettings(
+      accuracy: geo.LocationAccuracy.high,
+      distanceFilter: 10,
+    );
+    _locationSubscription =
+        geo.Geolocator.getPositionStream(locationSettings: settings).listen((
+          geo.Position position,
+        ) {
+          if (!mounted || !_isJourneyActive) return;
+          setState(() {
+            _journeyHistory.add(position);
+            _updateJourneyProgress(position);
+          });
+          _followUserLocation(position);
+        });
+  }
+
+  void _updateJourneyProgress(geo.Position currentPos) {
+    if (origin == null || destination == null) return;
+    final start = origin!.coordinates;
+    final end = destination!.coordinates;
+    final current = Position(currentPos.longitude, currentPos.latitude);
+
+    final totalDistance = _calculateDistance(start, end);
+    final traveledDistance = _calculateDistance(start, current);
+
+    setState(() {
+      _journeyProgress = (traveledDistance / totalDistance).clamp(0.0, 1.0);
+      _currentETA = _calculateETA(traveledDistance, totalDistance);
+    });
+
+    if (_calculateDistance(current, end) < 0.05) _endJourney(); // 50 meters
+  }
+
+  Future<void> _shareCurrentLocation() async {
+    try {
+      final position = await geo.Geolocator.getCurrentPosition(
+        locationSettings: const geo.LocationSettings(
+          accuracy: geo.LocationAccuracy.high,
+        ),
+        timeLimit: const Duration(seconds: 5),
+      );
+      final locationLink =
+          'http://maps.google.com/maps?q=${position.latitude},${position.longitude}';
+      await SOSService.sendSOSSMS(locationLink);
+    } catch (e) {
+      debugPrint('❌ Failed to share location: $e');
+    }
+  }
+
+  void _startPeriodicSharing() {
+    Future.delayed(const Duration(minutes: 3), () {
+      if (mounted && _isJourneyActive) {
+        _shareCurrentLocation();
+        _startPeriodicSharing();
+      }
+    });
+  }
+
+  void _followUserLocation(geo.Position position) {
+    mapboxMap?.flyTo(
+      CameraOptions(
+        center: Point(
+          coordinates: Position(position.longitude, position.latitude),
+        ),
+        zoom: 16.0,
+        pitch: 45.0,
+      ),
+      MapAnimationOptions(duration: 500),
+    );
+  }
+
+  void _endJourney() {
+    if (!_isJourneyActive) return;
+    setState(() {
+      _isJourneyActive = false;
+      _journeyProgress = 1.0;
+    });
+    _locationSubscription?.cancel();
+    _locationSubscription = null;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('🎉 Journey completed!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+// ✅ FIXED: Use .lat and .lng for Mapbox Position objects
+  double _calculateDistance(Position a, Position b) {
+    const double earthRadius = 6371; // km
+    final dLat = _toRadians((b.lat - a.lat).toDouble());
+    final dLon = _toRadians((b.lng - a.lng).toDouble());
+    final lat1 = _toRadians(a.lat.toDouble());
+    final lat2 = _toRadians(b.lat.toDouble());
+
+    final haversine =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1) *
+            math.cos(lat2) *
+            math.sin(dLon / 2) *
+            math.sin(dLon / 2);
+    final c = 2 * math.atan2(math.sqrt(haversine), math.sqrt(1 - haversine));
+
+    return earthRadius * c;
+  }
+
+  double _toRadians(double deg) => deg * (math.pi / 180);
+
+  String _calculateETA(double traveled, double total) {
+    if (traveled >= total) return 'Arrived';
+    final remainingKm = total - traveled;
+    final minutes = (remainingKm / 5.0 * 60).round();
+    return '~$minutes min';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -408,16 +588,10 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.teal,
-        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.sos, color: Colors.red, size: 30),
-            onPressed: () {
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('🚨 SOS Activated!')),
-              );
-            },
+            onPressed: _triggerSOS,
           ),
         ],
       ),
@@ -426,15 +600,12 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
           MapWidget(
             styleUri: MapboxStyles.MAPBOX_STREETS,
             onMapCreated: _onMapCreated,
-            // ✅ v11 FIX: This is the correct place to trigger 3D buildings
-            onStyleLoadedListener: (StyleLoadedEventData data) {
-              _add3DBuildings();
-            },
+            // ✅ v11 Replacement for addOnStyleLoadedListener
+            onStyleLoadedListener: (StyleLoadedEventData data) =>
+                _add3DBuildings(),
           ),
-
           if (isLoading)
             const Center(child: CircularProgressIndicator(color: Colors.teal)),
-
           Positioned(
             top: 20,
             left: 15,
@@ -447,13 +618,10 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
                   suggestions: _sourceSuggestions,
                   visible: _showSourceSuggestions,
                   onSelect: (p) => _selectSuggestion(p, true),
-                  onClear: () {
-                    if (!mounted) return;
-                    setState(() {
-                      _showSourceSuggestions = false;
-                      _sourceSuggestions = [];
-                    });
-                  },
+                  onClear: () => setState(() {
+                    _showSourceSuggestions = false;
+                    _sourceSuggestions = [];
+                  }),
                 ),
                 const SizedBox(height: 12),
                 _buildSearchBox(
@@ -463,7 +631,6 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
                   visible: _showDestSuggestions,
                   onSelect: (p) => _selectSuggestion(p, false),
                   onClear: () {
-                    if (!mounted) return;
                     setState(() {
                       _showDestSuggestions = false;
                       _destSuggestions = [];
@@ -474,7 +641,6 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
               ],
             ),
           ),
-
           Positioned(
             bottom: 110,
             left: 25,
@@ -498,7 +664,6 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
               ),
             ),
           ),
-
           if (destination != null)
             Positioned(
               bottom: 30,
@@ -508,27 +673,50 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
                 height: 60,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE57171),
+                    backgroundColor: _isJourneyActive
+                        ? Colors.grey
+                        : const Color(0xFFE57171),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  onPressed: () {
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('🚶 Journey started! Stay safe.'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  },
+                  onPressed: _isJourneyActive ? _endJourney : _startJourney,
                   child: Text(
-                    "Start Journey • ${_routeDistance ?? ''} (${_routeDuration ?? ''})",
+                    _isJourneyActive
+                        ? 'End Journey'
+                        : 'Start Journey • ${_routeDistance ?? ""}',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                ),
+              ),
+            ),
+          if (_isJourneyActive)
+            Positioned(
+              top: 180,
+              left: 20,
+              right: 20,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      LinearProgressIndicator(
+                        value: _journeyProgress,
+                        color: Colors.teal,
+                      ),
+                      if (_currentETA != null)
+                        Text(
+                          'ETA: $_currentETA',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -543,11 +731,9 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
     return IconButton(
       icon: Icon(icon, color: active ? Colors.teal : Colors.black45, size: 28),
       onPressed: () {
-        if (!mounted) return;
         setState(() => _profile = mode);
-        if (origin != null && destination != null) {
+        if (origin != null && destination != null)
           _drawRoute(origin!, destination!);
-        }
       },
     );
   }
@@ -607,6 +793,14 @@ class _MapboxSafeRouteState extends State<MapboxSafeRoute> {
                 title: Text(
                   suggestions[i]['display_name'],
                   style: const TextStyle(color: Colors.black, fontSize: 13),
+                ),
+                subtitle: Text(
+                  suggestions[i]['display_name']
+                      .split(',')
+                      .skip(1)
+                      .take(2)
+                      .join(','),
+                  style: const TextStyle(color: Colors.grey, fontSize: 11),
                 ),
                 onTap: () => onSelect(suggestions[i]),
               ),
