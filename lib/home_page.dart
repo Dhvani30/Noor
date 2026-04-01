@@ -12,7 +12,7 @@ import 'profile_page.dart';
 import 'dart:convert';
 import 'package:noor_new/services/sos_service.dart';
 import 'package:geolocator/geolocator.dart'; // ✅ Removed latlong2 (not needed here)
-
+import 'news_page.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
