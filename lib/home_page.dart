@@ -19,6 +19,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:battery_plus/battery_plus.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -98,14 +99,15 @@ class _HomePageContentState extends State<HomePageContent> {
   final OfflineRiskService _riskService = OfflineRiskService();
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  final Battery _battery = Battery();
 
   bool _showDangerAlert = false;
   Map<String, dynamic>? _currentDangerData;
   StreamSubscription<Position>? _locationSubscription;
+  StreamSubscription<BatteryState>? _batterySubscription;
   bool _isMonitoring = false;
-
-  // ✅ NEW: Cooldown Timer Variable
   DateTime? _alertCooldownUntil;
+  bool _lowBatterySossent = false;
 
   @override
   void initState() {
@@ -113,6 +115,7 @@ class _HomePageContentState extends State<HomePageContent> {
     _riskService.initialize();
     _requestNotificationPermission();
     _startDangerZoneMonitoring();
+    _startBatteryMonitoring();
   }
 
   Future<void> _requestNotificationPermission() async {
@@ -124,7 +127,57 @@ class _HomePageContentState extends State<HomePageContent> {
   @override
   void dispose() {
     _locationSubscription?.cancel();
+    _batterySubscription?.cancel();
     super.dispose();
+  }
+
+  void _startBatteryMonitoring() {
+    _batterySubscription = _battery.onBatteryStateChanged.listen((
+      BatteryState state,
+    ) async {
+      final int level = await _battery.batteryLevel;
+      // debugPrint('🔋 Battery Level: $level%');
+
+      if (level <= 15 && !_lowBatterySossent) {
+        _triggerLowBatterySOS();
+      }
+    });
+  }
+
+  Future<void> _triggerLowBatterySOS() async {
+    debugPrint('⚠️ LOW BATTERY DETECTED! Triggering Auto-SOS...');
+    _lowBatterySossent = true;
+
+    try {
+      const LocationSettings settings = LocationSettings(
+        accuracy: LocationAccuracy.high,
+        timeLimit: Duration(seconds: 5),
+      );
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: settings,
+      );
+      String locationLink =
+          'https://maps.google.com/?q=${position.latitude},${position.longitude}';
+
+      await SOSService.sendSOSSMS(locationLink);
+
+      const AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
+            'danger_zone_channel',
+            'Danger Zone Alerts',
+            importance: Importance.max,
+            priority: Priority.high,
+          );
+      await _notificationsPlugin.show(
+        id: 99,
+        title: '🔋 Low Battery SOS Sent',
+        body:
+            'Send your location to your emergency contacts. Please charge your phone soon!',
+        notificationDetails: NotificationDetails(android: androidDetails),
+      );
+    } catch (e) {
+      debugPrint('❌ Failed to send Low Battery SOS: $e');
+    }
   }
 
   void _startDangerZoneMonitoring() async {
@@ -145,16 +198,10 @@ class _HomePageContentState extends State<HomePageContent> {
     _locationSubscription =
         Geolocator.getPositionStream(locationSettings: locationSettings).listen(
           (Position position) {
-            // 1. Don't check if alert is currently showing
             if (_showDangerAlert) return;
-
-            // 2. ✅ CHECK COOLDOWN: Skip if we are still in the cooldown period
             if (_alertCooldownUntil != null &&
-                DateTime.now().isBefore(_alertCooldownUntil!)) {
-              // Optional: Print to console to verify cooldown is working
-              // debugPrint('⏳ In cooldown mode. Skipping alert check.');
+                DateTime.now().isBefore(_alertCooldownUntil!))
               return;
-            }
 
             final result = _riskService.checkDangerZone(
               position.latitude,
@@ -163,12 +210,10 @@ class _HomePageContentState extends State<HomePageContent> {
 
             if (result['isDanger'] == true) {
               debugPrint('🚨 DANGER ZONE ENTERED: ${result['level']}');
-
               setState(() {
                 _currentDangerData = result;
                 _showDangerAlert = true;
               });
-
               _showDangerNotification(result);
             }
           },
@@ -206,8 +251,6 @@ class _HomePageContentState extends State<HomePageContent> {
       debugPrint('❌ Notification Error: $e');
     }
   }
-
-  // ... (Keep _getCurrentLocationName, _callSOS, _loadEmergencyCards exactly as they were) ...
 
   Future<String> _getCurrentLocationName() async {
     try {
@@ -559,51 +602,31 @@ class _HomePageContentState extends State<HomePageContent> {
                   },
                 ),
                 const SizedBox(height: 20),
-                Center(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      debugPrint('🧪 Manual Test Triggered');
-                      _showDangerNotification({
-                        'level': 'TEST',
-                        'message': 'Manual test successful.',
-                      });
-                    },
-                    icon: const Icon(Icons.bug_report),
-                    label: const Text('Test Notification'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade300,
-                      foregroundColor: Colors.black,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
+                // ✅ Test Button Removed
               ],
             ),
           ),
         ),
 
-        // ✅ ALERT OVERLAY WITH COOLDOWN LOGIC
         if (_showDangerAlert && _currentDangerData != null)
           DangerZoneAlert(
             level: _currentDangerData!['level'],
             message: _currentDangerData!['message'],
             tip: _currentDangerData!['tip'],
             onSafe: () {
-              // ✅ SET COOLDOWN FOR 180 SECONDS
               setState(() {
                 _alertCooldownUntil = DateTime.now().add(
-                  const Duration(seconds: 180),
+                  const Duration(seconds: 60),
                 );
                 _showDangerAlert = false;
                 _currentDangerData = null;
               });
-              debugPrint('⏳ Alert dismissed. Cooldown active for 60 seconds.');
             },
             onSOS: () {
               _callSOS(context);
               setState(() {
                 _alertCooldownUntil = DateTime.now().add(
-                  const Duration(seconds: 60),
+                  const Duration(seconds: 180),
                 );
                 _showDangerAlert = false;
               });
@@ -613,41 +636,41 @@ class _HomePageContentState extends State<HomePageContent> {
     );
   }
 
-  // ... (Keep _buildUnifiedForecastCard exactly as it was in the previous code) ...
   Widget _buildUnifiedForecastCard({
     required BuildContext context,
     required RiskForecast current,
     RiskForecast? next,
     required Color primaryColor,
   }) {
-    // ... (Paste the entire _buildUnifiedForecastCard method from the previous response here) ...
-    // Since it is long, I assume you have it. Just ensure you paste the whole function back.
-
-    // [PASTE THE FULL _buildUnifiedForecastCard CODE HERE]
     String weatherImpactTitle = "Weather Impact";
     String weatherImpactMessage = "";
     IconData weatherImpactIcon = Icons.cloud_sync;
     Color impactColor = Colors.blue;
 
     if (current.weatherCondition.contains("Rain")) {
-      weatherImpactMessage = "Heavy rain reduces visibility...";
+      weatherImpactMessage =
+          "Heavy rain reduces visibility and makes roads slippery. Risk level increased due to fewer pedestrians and slower traffic response.";
       weatherImpactIcon = Icons.thunderstorm;
       impactColor = Colors.indigo;
     } else if (current.weatherCondition.contains("Humid")) {
-      weatherImpactMessage = "High humidity can cause fatigue...";
+      weatherImpactMessage =
+          "High humidity can cause fatigue and dehydration, reducing alertness. Stick to well-ventilated areas and carry water.";
       weatherImpactIcon = Icons.water_drop;
       impactColor = Colors.cyan;
     } else if (current.weatherCondition.contains("Cloudy") ||
         current.weatherCondition.contains("Overcast")) {
-      weatherImpactMessage = "Overcast skies may reduce natural lighting...";
+      weatherImpactMessage =
+          "Overcast skies may reduce natural lighting earlier in the evening. Ensure your path is well-lit.";
       weatherImpactIcon = Icons.cloud;
       impactColor = Colors.grey;
     } else if (current.temperature > 35) {
-      weatherImpactMessage = "Extreme heat can cause exhaustion...";
+      weatherImpactMessage =
+          "Extreme heat can cause exhaustion. Avoid prolonged exposure and stay near shaded, populated areas.";
       weatherImpactIcon = Icons.wb_sunny;
       impactColor = Colors.orange;
     } else {
-      weatherImpactMessage = "Clear conditions offer good visibility...";
+      weatherImpactMessage =
+          "Clear conditions offer good visibility. Standard safety precautions apply.";
       weatherImpactIcon = Icons.check_circle_outline;
       impactColor = Colors.green;
     }

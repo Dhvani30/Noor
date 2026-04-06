@@ -65,6 +65,7 @@ dependencies:
   glassmorphism: ^3.0.0
   animated_bottom_navigation_bar: ^1.4.0
   geocoding: ^4.0.0
+  battery_plus: ^7.0.0
 
 dev_dependencies:
   flutter_test:
