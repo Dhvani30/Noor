@@ -54,7 +54,7 @@ Future<void> backgroundCallback(int id) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  
   final FlutterLocalNotificationsPlugin notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
