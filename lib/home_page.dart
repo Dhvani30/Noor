@@ -22,6 +22,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'dart:async';
 import 'package:noor_new/theme/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -345,7 +346,12 @@ class _HomePageContentState extends State<HomePageContent> {
             break;
           }
         }
-        return "$area, $city";
+        // return "$area, $city";
+        if (area.isEmpty || area == "Unknown Area") {
+          return city;  // Just return city (e.g., "California")
+      } else {
+          return "$area, $city";  // Return both (e.g., "Kandivali, Mumbai")
+      }
       }
     } catch (e) {
       debugPrint('Location error: $e');
@@ -468,7 +474,7 @@ class _HomePageContentState extends State<HomePageContent> {
         'title': 'Police',
         'number': '100',
         'icon': Icons.security,
-        'color': AppColors.primaryBurgundyLight,
+        'color': const Color.fromARGB(255, 190, 85, 106),
       },
       {
         'title': 'Women Helpline',
@@ -578,7 +584,7 @@ class _HomePageContentState extends State<HomePageContent> {
     children: [
       CircleAvatar(
         radius: 20,
-        backgroundColor: AppColors.primaryBurgundyLight,
+        backgroundColor: const Color.fromARGB(255, 213, 60, 96),
         child: const Icon(Icons.person, color: Colors.white),
       ),
       const SizedBox(width: 12),
@@ -587,10 +593,11 @@ class _HomePageContentState extends State<HomePageContent> {
         children: [
           Text(
             'Hi, User!',
-            style: TextStyle(
-              fontSize: 16,
+            style: GoogleFonts.dancingScript(
+              fontSize: 24,
               fontWeight: FontWeight.w600,
               color: textColorMain,
+              letterSpacing: 0.5,
             ),
           ),
           Text(
@@ -606,7 +613,7 @@ class _HomePageContentState extends State<HomePageContent> {
   ),
 ),
 
-const SizedBox(height: 23),
+const SizedBox(height: 15),
 
                 // ✅ EMERGENCY GRID
                 GridView.builder(
