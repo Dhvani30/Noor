@@ -22,6 +22,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'dart:async';
 import 'package:noor_new/theme/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -345,7 +346,12 @@ class _HomePageContentState extends State<HomePageContent> {
             break;
           }
         }
-        return "$area, $city";
+        // return "$area, $city";
+        if (area.isEmpty || area == "Unknown Area") {
+          return city;  // Just return city (e.g., "California")
+      } else {
+          return "$area, $city";  // Return both (e.g., "Kandivali, Mumbai")
+      }
       }
     } catch (e) {
       debugPrint('Location error: $e');
@@ -468,7 +474,7 @@ class _HomePageContentState extends State<HomePageContent> {
         'title': 'Police',
         'number': '100',
         'icon': Icons.security,
-        'color': AppColors.primaryBurgundyLight,
+        'color': const Color.fromARGB(255, 190, 85, 106),
       },
       {
         'title': 'Women Helpline',
@@ -560,7 +566,7 @@ class _HomePageContentState extends State<HomePageContent> {
         // 2. Main Content
         SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -571,7 +577,43 @@ class _HomePageContentState extends State<HomePageContent> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+        Padding(
+  padding: const EdgeInsets.only(top: 8),
+  child: Row(
+    children: [
+      CircleAvatar(
+        radius: 20,
+        backgroundColor: const Color.fromARGB(255, 213, 60, 96),
+        child: const Icon(Icons.person, color: Colors.white),
+      ),
+      const SizedBox(width: 12),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Hi, User!',
+            style: GoogleFonts.dancingScript(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: textColorMain,
+              letterSpacing: 0.5,
+            ),
+          ),
+          Text(
+            'Stay safe today',
+            style: TextStyle(
+              fontSize: 12,
+              color: textColorSub,
+            ),
+          ),
+        ],
+      ),
+    ],
+  ),
+),
+
+const SizedBox(height: 15),
 
                 // ✅ EMERGENCY GRID
                 GridView.builder(
@@ -579,8 +621,8 @@ class _HomePageContentState extends State<HomePageContent> {
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
                     childAspectRatio: 1.6,
                   ),
                   itemCount: _emergencyNumbers.length,
@@ -599,95 +641,199 @@ class _HomePageContentState extends State<HomePageContent> {
                   },
                 ),
 
-                const SizedBox(height: 48),
+                const SizedBox(height: 20),
+
+                // // ✅ REDESIGNED SOS BUTTON
+                // Center(
+                //   child: Column(
+                //     children: [
+                //       GestureDetector(
+                //         onTap: _triggerPanicAnimation,
+                //         onLongPress: () {
+                //           showDialog(
+                //             context: context,
+                //             builder: (_) => AlertDialog(
+                //               backgroundColor: glassColor,
+                //               title: const Text(
+                //                 'SOS Help',
+                //                 style: TextStyle(color: Colors.white),
+                //               ),
+                //               content: const Text(
+                //                 'Tap to initiate emergency alert. You will have 3 seconds to cancel.',
+                //                 style: TextStyle(color: Colors.white70),
+                //               ),
+                //               actions: [
+                //                 TextButton(
+                //                   onPressed: () => Navigator.pop(context),
+                //                   child: const Text(
+                //                     'Got it',
+                //                     style: TextStyle(color: Colors.white),
+                //                   ),
+                //                 ),
+                //               ],
+                //             ),
+                //           );
+                //         },
+                //         child: AnimatedContainer(
+                //           duration: const Duration(milliseconds: 300),
+                //           width: 180,
+                //           height: 180,
+                //           decoration: BoxDecoration(
+                //             shape: BoxShape.circle,
+                //             color: sosButtonColor,
+                //             boxShadow: [
+                //               BoxShadow(
+                //                 color: sosButtonColor.withValues(alpha: 0.4),
+                //                 blurRadius: 30,
+                //                 spreadRadius: 5,
+                //                 offset: const Offset(0, 0),
+                //               ),
+                //               BoxShadow(
+                //                 color: Colors.red.withValues(alpha: 0.2),
+                //                 blurRadius: 50,
+                //                 spreadRadius: 10,
+                //                 offset: const Offset(0, 0),
+                //               ),
+                //             ],
+                //             border: Border.all(
+                //               color: Colors.white.withValues(alpha: 0.3),
+                //               width: 2,
+                //             ),
+                //           ),
+                //           child: const Column(
+                //             mainAxisAlignment: MainAxisAlignment.center,
+                //             children: [
+                //               Icon(Icons.sos, color: Colors.white, size: 56),
+                //               SizedBox(height: 8),
+                //               Text(
+                //                 'TAP FOR SOS',
+                //                 style: TextStyle(
+                //                   fontSize: 18,
+                //                   fontWeight: FontWeight.bold,
+                //                   color: Colors.white,
+                //                   letterSpacing: 2,
+                //                 ),
+                //               ),
+                //             ],
+                //           ),
+                //         ),
+                //       ),
+                //       const SizedBox(height: 12),
+                //       Text(
+                //         'Hold to learn more',
+                //         style: theme.textTheme.bodySmall?.copyWith(
+                //           color: textColorSub,
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
+
+                //                 const SizedBox(height: 32),
+
 
                 // ✅ REDESIGNED SOS BUTTON
-                Center(
-                  child: Column(
-                    children: [
-                      GestureDetector(
-                        onTap: _triggerPanicAnimation,
-                        onLongPress: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) => AlertDialog(
-                              backgroundColor: glassColor,
-                              title: const Text(
-                                'SOS Help',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              content: const Text(
-                                'Tap to initiate emergency alert. You will have 3 seconds to cancel.',
-                                style: TextStyle(color: Colors.white70),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text(
-                                    'Got it',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          width: 180,
-                          height: 180,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: sosButtonColor,
-                            boxShadow: [
-                              BoxShadow(
-                                color: sosButtonColor.withValues(alpha: 0.4),
-                                blurRadius: 30,
-                                spreadRadius: 5,
-                                offset: const Offset(0, 0),
-                              ),
-                              BoxShadow(
-                                color: Colors.red.withValues(alpha: 0.2),
-                                blurRadius: 50,
-                                spreadRadius: 10,
-                                offset: const Offset(0, 0),
-                              ),
-                            ],
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              width: 2,
-                            ),
-                          ),
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.sos, color: Colors.white, size: 56),
-                              SizedBox(height: 8),
-                              Text(
-                                'TAP FOR SOS',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  letterSpacing: 2,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Hold to learn more',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: textColorSub,
-                        ),
-                      ),
-                    ],
+Center(
+  child: Column(
+    children: [
+      GestureDetector(
+        onTap: _triggerPanicAnimation,
+        onLongPress: () {
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              backgroundColor: glassColor,
+              title: Text(
+                'SOS Help',
+                style: TextStyle(
+                  color: isDark ? Colors.black87 : Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: Text(
+                'Tap to initiate emergency alert. You will have 3 seconds to cancel.',
+                style: TextStyle(
+                  color: isDark ? Colors.black54 : Colors.white70,
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Got it',
+                    style: TextStyle(
+                      color: isDark ? Colors.black87 : Colors.white,
+                    ),
                   ),
                 ),
-
-                                const SizedBox(height: 32),
+              ],
+            ),
+          );
+        },
+        child: Container(
+          width: 160,
+          height: 160,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isDark 
+                ? Colors.white  // Dark mode: white button
+                : const Color(0xFFE53E57),  // Light mode: red button (matching your design)
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : const Color(0xFFE53E57).withValues(alpha: 0.4),
+                blurRadius: 30,
+                spreadRadius: 5,
+              ),
+              BoxShadow(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.red.withValues(alpha: 0.2),
+                blurRadius: 50,
+                spreadRadius: 10,
+              ),
+            ],
+            border: Border.all(
+              color: isDark
+                  ? const Color(0xFFE53E57).withValues(alpha: 0.3)
+                  : Colors.white.withValues(alpha: 0.3),
+              width: 3,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.sos, 
+                color: isDark ? const Color(0xFFE53E57) : Colors.white,
+                size: 50,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Tap for Help',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? const Color(0xFFE53E57) : Colors.white,
+                  letterSpacing: 2,
+                  fontFamily: 'Montserrat',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
+      Text(
+        '',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: textColorSub,
+        ),
+      ),
+    ],
+  ),
+),
 
                 // ✅ FLAT THIN GLASS RECTANGLE (Horizontal Layout)
                 Center(
@@ -709,20 +855,22 @@ class _HomePageContentState extends State<HomePageContent> {
                           width: 240,  // Slightly wider to fit horizontal text
                           height: 70,  // Thin height
                           decoration: BoxDecoration(
-                            color: glassColor,
-                            border: Border.all(
-                              color: borderColor,
-                              width: 1,
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
+                           color: glassColor,
+        border: Border.all(
+          color: isDark 
+              ? AppColors.primaryBurgundyLight.withValues(alpha: 0.6) 
+              : AppColors.primaryBurgundyLight.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
