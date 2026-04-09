@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'dart:ui'; // ✅ Essential for ImageFilter.blur
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
@@ -225,7 +225,7 @@ class _HomePageContentState extends State<HomePageContent> {
     HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('SOS Cancelled'),
+        content: const Text('SOS Cancelled'),
         backgroundColor: Colors.grey,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -346,12 +346,11 @@ class _HomePageContentState extends State<HomePageContent> {
             break;
           }
         }
-        // return "$area, $city";
         if (area.isEmpty || area == "Unknown Area") {
-          return city;  // Just return city (e.g., "California")
-      } else {
-          return "$area, $city";  // Return both (e.g., "Kandivali, Mumbai")
-      }
+          return city;
+        } else {
+          return "$area, $city";
+        }
       }
     } catch (e) {
       debugPrint('Location error: $e');
@@ -474,37 +473,37 @@ class _HomePageContentState extends State<HomePageContent> {
         'title': 'Police',
         'number': '100',
         'icon': Icons.security,
-        'color': const Color.fromARGB(255, 190, 85, 106),
+        'color': const Color.fromARGB(255, 153, 27, 27),
       },
       {
         'title': 'Women Helpline',
         'number': '1091',
         'icon': Icons.female,
-        'color': AppColors.riskRed,
+        'color': const Color.fromARGB(255, 153, 27, 27),
       },
       {
         'title': 'Fire',
         'number': '101',
         'icon': Icons.local_fire_department,
-        'color': AppColors.riskOrange,
+        'color': const Color.fromARGB(255, 153, 27, 27),
       },
       {
         'title': 'Ambulance',
         'number': '102',
         'icon': Icons.medical_services,
-        'color': AppColors.riskGreen,
+        'color': const Color.fromARGB(255, 153, 27, 27),
       },
       {
         'title': 'Disaster Mgmt',
         'number': '1077',
         'icon': Icons.warning_amber_rounded,
-        'color': AppColors.riskYellow,
+        'color': const Color.fromARGB(255, 153, 27, 27),
       },
       {
         'title': 'Childline',
         'number': '1098',
         'icon': Icons.child_care,
-        'color': AppColors.secondaryRoseGold,
+        'color': const Color.fromARGB(255, 153, 27, 27),
       },
     ];
   }
@@ -539,13 +538,6 @@ class _HomePageContentState extends State<HomePageContent> {
     final isDark = theme.brightness == Brightness.dark;
 
     // Dynamic Colors
-    final bgGradient = LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: isDark
-          ? [AppColors.bgDarkStart, AppColors.bgDarkEnd]
-          : [AppColors.bgLightStart, AppColors.bgLightEnd],
-    );
     final glassColor = isDark ? AppColors.glassDark : AppColors.glassLight;
     final textColorMain = isDark
         ? AppColors.textDarkMain
@@ -560,10 +552,31 @@ class _HomePageContentState extends State<HomePageContent> {
 
     return Stack(
       children: [
-        // 1. Gradient Background
-        Container(decoration: BoxDecoration(gradient: bgGradient)),
+        // ✅ 1. BLURRED BACKGROUND IMAGE
+        ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: 80,
+              sigmaY: 80,
+            ), // Adjust blur intensity here
+            child: Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage(
+                    isDark ? AppColors.bgDarkImage : AppColors.bgLightImage,
+                  ),
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                  colorFilter: ColorFilter.mode(
+                    isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.3),
+                    BlendMode.softLight,),
+                ),
+              ),
+            ),
+          ),
+        ),
 
-        // 2. Main Content
+        // ✅ 2. Main Content
         SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
@@ -578,52 +591,52 @@ class _HomePageContentState extends State<HomePageContent> {
                   ),
                 ),
                 const SizedBox(height: 8),
-        Padding(
-  padding: const EdgeInsets.only(top: 8),
-  child: Row(
-    children: [
-      CircleAvatar(
-        radius: 20,
-        backgroundColor: const Color.fromARGB(255, 213, 60, 96),
-        child: const Icon(Icons.person, color: Colors.white),
-      ),
-      const SizedBox(width: 12),
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Hi, User!',
-            style: GoogleFonts.dancingScript(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: textColorMain,
-              letterSpacing: 0.5,
-            ),
-          ),
-          Text(
-            'Stay safe today',
-            style: TextStyle(
-              fontSize: 12,
-              color: textColorSub,
-            ),
-          ),
-        ],
-      ),
-    ],
-  ),
-),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: const Color.fromARGB(255, 153, 27, 27),
+                        child: const Icon(Icons.person, color: Colors.white),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Hi, User!',
+                            style: GoogleFonts.dancingScript(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                              color: textColorMain,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            'Stay safe today',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: const Color.fromARGB(255, 153, 27, 27),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
 
-const SizedBox(height: 15),
+                const SizedBox(height: 15),
 
-                // ✅ EMERGENCY GRID
+                // ✅ EMERGENCY GRID (3 Columns, Square)
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 1.6,
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.0,
                   ),
                   itemCount: _emergencyNumbers.length,
                   itemBuilder: (context, index) {
@@ -643,199 +656,116 @@ const SizedBox(height: 15),
 
                 const SizedBox(height: 20),
 
-                // // ✅ REDESIGNED SOS BUTTON
-                // Center(
-                //   child: Column(
-                //     children: [
-                //       GestureDetector(
-                //         onTap: _triggerPanicAnimation,
-                //         onLongPress: () {
-                //           showDialog(
-                //             context: context,
-                //             builder: (_) => AlertDialog(
-                //               backgroundColor: glassColor,
-                //               title: const Text(
-                //                 'SOS Help',
-                //                 style: TextStyle(color: Colors.white),
-                //               ),
-                //               content: const Text(
-                //                 'Tap to initiate emergency alert. You will have 3 seconds to cancel.',
-                //                 style: TextStyle(color: Colors.white70),
-                //               ),
-                //               actions: [
-                //                 TextButton(
-                //                   onPressed: () => Navigator.pop(context),
-                //                   child: const Text(
-                //                     'Got it',
-                //                     style: TextStyle(color: Colors.white),
-                //                   ),
-                //                 ),
-                //               ],
-                //             ),
-                //           );
-                //         },
-                //         child: AnimatedContainer(
-                //           duration: const Duration(milliseconds: 300),
-                //           width: 180,
-                //           height: 180,
-                //           decoration: BoxDecoration(
-                //             shape: BoxShape.circle,
-                //             color: sosButtonColor,
-                //             boxShadow: [
-                //               BoxShadow(
-                //                 color: sosButtonColor.withValues(alpha: 0.4),
-                //                 blurRadius: 30,
-                //                 spreadRadius: 5,
-                //                 offset: const Offset(0, 0),
-                //               ),
-                //               BoxShadow(
-                //                 color: Colors.red.withValues(alpha: 0.2),
-                //                 blurRadius: 50,
-                //                 spreadRadius: 10,
-                //                 offset: const Offset(0, 0),
-                //               ),
-                //             ],
-                //             border: Border.all(
-                //               color: Colors.white.withValues(alpha: 0.3),
-                //               width: 2,
-                //             ),
-                //           ),
-                //           child: const Column(
-                //             mainAxisAlignment: MainAxisAlignment.center,
-                //             children: [
-                //               Icon(Icons.sos, color: Colors.white, size: 56),
-                //               SizedBox(height: 8),
-                //               Text(
-                //                 'TAP FOR SOS',
-                //                 style: TextStyle(
-                //                   fontSize: 18,
-                //                   fontWeight: FontWeight.bold,
-                //                   color: Colors.white,
-                //                   letterSpacing: 2,
-                //                 ),
-                //               ),
-                //             ],
-                //           ),
-                //         ),
-                //       ),
-                //       const SizedBox(height: 12),
-                //       Text(
-                //         'Hold to learn more',
-                //         style: theme.textTheme.bodySmall?.copyWith(
-                //           color: textColorSub,
-                //         ),
-                //       ),
-                //     ],
-                //   ),
-                // ),
-
-                //                 const SizedBox(height: 32),
-
-
-                // ✅ REDESIGNED SOS BUTTON
-Center(
-  child: Column(
-    children: [
-      GestureDetector(
-        onTap: _triggerPanicAnimation,
-        onLongPress: () {
-          showDialog(
-            context: context,
-            builder: (_) => AlertDialog(
-              backgroundColor: glassColor,
-              title: Text(
-                'SOS Help',
-                style: TextStyle(
-                  color: isDark ? Colors.black87 : Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              content: Text(
-                'Tap to initiate emergency alert. You will have 3 seconds to cancel.',
-                style: TextStyle(
-                  color: isDark ? Colors.black54 : Colors.white70,
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Got it',
-                    style: TextStyle(
-                      color: isDark ? Colors.black87 : Colors.white,
-                    ),
+                // ✅ SOS BUTTON
+                Center(
+                  child: Column(
+                    children: [
+                      GestureDetector(
+                        onTap: _triggerPanicAnimation,
+                        onLongPress: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              backgroundColor: glassColor,
+                              title: Text(
+                                'SOS Help',
+                                style: TextStyle(
+                                  color: isDark ? Colors.black87 : Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              content: Text(
+                                'Tap to initiate emergency alert. You will have 3 seconds to cancel.',
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.black54
+                                      : Colors.white70,
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Text(
+                                    'Got it',
+                                    style: TextStyle(
+                                      color: isDark
+                                          ? Colors.black87
+                                          : Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 160,
+                          height: 160,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFFE53E57),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.2)
+                                    : const Color(
+                                        0xFFE53E57,
+                                      ).withValues(alpha: 0.4),
+                                blurRadius: 30,
+                                spreadRadius: 5,
+                              ),
+                              BoxShadow(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.1)
+                                    : Colors.red.withValues(alpha: 0.2),
+                                blurRadius: 50,
+                                spreadRadius: 10,
+                              ),
+                            ],
+                            border: Border.all(
+                              color: isDark
+                                  ? const Color(
+                                      0xFFE53E57,
+                                    ).withValues(alpha: 0.3)
+                                  : Colors.white.withValues(alpha: 0.3),
+                              width: 3,
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.sos,
+                                color: isDark
+                                    ? const Color(0xFFE53E57)
+                                    : Colors.white,
+                                size: 50,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Tap for Help',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark
+                                      ? const Color(0xFFE53E57)
+                                      : Colors.white,
+                                  letterSpacing: 2,
+                                  fontFamily: 'Montserrat',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          );
-        },
-        child: Container(
-          width: 160,
-          height: 160,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isDark 
-                ? Colors.white  // Dark mode: white button
-                : const Color(0xFFE53E57),  // Light mode: red button (matching your design)
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : const Color(0xFFE53E57).withValues(alpha: 0.4),
-                blurRadius: 30,
-                spreadRadius: 5,
-              ),
-              BoxShadow(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.red.withValues(alpha: 0.2),
-                blurRadius: 50,
-                spreadRadius: 10,
-              ),
-            ],
-            border: Border.all(
-              color: isDark
-                  ? const Color(0xFFE53E57).withValues(alpha: 0.3)
-                  : Colors.white.withValues(alpha: 0.3),
-              width: 3,
-            ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.sos, 
-                color: isDark ? const Color(0xFFE53E57) : Colors.white,
-                size: 50,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Tap for Help',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? const Color(0xFFE53E57) : Colors.white,
-                  letterSpacing: 2,
-                  fontFamily: 'Montserrat',
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      const SizedBox(height: 12),
-      Text(
-        '',
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: textColorSub,
-        ),
-      ),
-    ],
-  ),
-),
 
-                // ✅ FLAT THIN GLASS RECTANGLE (Horizontal Layout)
+                // ✅ FLAT THIN GLASS RECTANGLE (Fake Call)
                 Center(
                   child: GestureDetector(
                     onTap: () {
@@ -852,36 +782,38 @@ Center(
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                         child: Container(
-                          width: 240,  // Slightly wider to fit horizontal text
-                          height: 70,  // Thin height
+                          width: 240,
+                          height: 70,
                           decoration: BoxDecoration(
-                           color: glassColor,
-        border: Border.all(
-          color: isDark 
-              ? AppColors.primaryBurgundyLight.withValues(alpha: 0.6) 
-              : AppColors.primaryBurgundyLight.withValues(alpha: 0.4),
-          width: 1.5,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+                            color: glassColor,
+                            border: Border.all(
+                              color: isDark
+                                  ? AppColors.primaryBurgundyLight.withValues(
+                                      alpha: 0.6,
+                                    )
+                                  : AppColors.primaryBurgundyLight.withValues(
+                                      alpha: 0.4,
+                                    ),
+                              width: 1.5,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              // ✅ Icon on the Left
                               Icon(
                                 Icons.phone_callback_rounded,
                                 color: sosButtonColor,
                                 size: 28,
                               ),
                               const SizedBox(width: 12),
-                              // ✅ Text on the Right
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1084,7 +1016,7 @@ Center(
     );
   }
 
-  Widget _buildGlassEmergencyCard({
+    Widget _buildGlassEmergencyCard({
     required String title,
     required String number,
     required IconData icon,
@@ -1097,49 +1029,73 @@ Center(
     return GestureDetector(
       onTap: () => _dialNumber(number, title),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        // ✅ iOS Squircle Shape (Smooth radius)
+        borderRadius: BorderRadius.circular(22),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          // ✅ Heavy Frosted Glass Blur (Like iOS)
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  color.withValues(alpha: 0.15),
-                  color.withValues(alpha: 0.05),
-                ],
+              // ✅ Very subtle background tint (mostly transparent)
+              color: glassColor.withValues(alpha: 0.4),
+              // ✅ Thin, crisp white/light border
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 1.2,
               ),
-              border: Border.all(color: borderColor),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(22),
+              // ✅ Subtle shadow for depth
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
+            // ✅ Perfectly Centered Content
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center, // Vertical Center
+              crossAxisAlignment:
+                  CrossAxisAlignment.center, // Horizontal Center
               children: [
-                Icon(icon, size: 32, color: color),
-                const SizedBox(height: 8),
+                // Icon with a subtle "glow" container behind it (optional, mimics active state)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: color.withValues(
+                      alpha: 0.15,
+                    ), // Very faint pink circle behind icon
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 32,
+                    color: color, // Solid pink icon
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Title
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color:
+                        textColor, // Uses theme text color (white/black) for readability
+                    letterSpacing: 0.3,
                   ),
                   textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
+                // Number
                 Text(
                   number,
                   style: TextStyle(
-                    fontSize: 12,
-                    color: subColor,
+                    fontSize: 11,
+                    color: color, // Pink number to match theme
                     fontWeight: FontWeight.w500,
                   ),
                 ),
