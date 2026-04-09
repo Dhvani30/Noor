@@ -605,7 +605,7 @@ class _HomePageContentState extends State<HomePageContent> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Hi, User!',
+                            'Hi, There!',
                             style: GoogleFonts.dancingScript(
                               fontSize: 24,
                               fontWeight: FontWeight.w600,
@@ -851,7 +851,7 @@ class _HomePageContentState extends State<HomePageContent> {
                   'Safety & Weather Dashboard',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: textColorMain,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1107,6 +1107,21 @@ class _HomePageContentState extends State<HomePageContent> {
     );
   }
 
+     // ✅ Helper: Get Theme-Matching Colors based on Risk Level
+  Color _getRiskColor(String level) {
+    switch (level.toLowerCase()) {
+      case 'low':
+        return const Color.fromARGB(255, 4, 86, 31); // Muted Sage Green (Matches UI better than bright green)
+      case 'moderate':
+        return AppColors.riskYellow; // Amber
+      case 'high':
+        return AppColors.riskOrange; // Orange
+      case 'critical':
+      default:
+        return AppColors.riskRed; // Burgundy/Red
+    }
+  }
+
   Widget _buildUnifiedForecastCard({
     required BuildContext context,
     required RiskForecast current,
@@ -1117,69 +1132,57 @@ class _HomePageContentState extends State<HomePageContent> {
     required Color textColorMain,
     required Color textColorSub,
   }) {
-    String weatherImpactTitle = "Weather Impact";
-    String weatherImpactMessage = "";
-    IconData weatherImpactIcon = Icons.cloud_sync;
-    Color impactColor = Colors.blue;
+    // Determine Weather Icon & Message
+    IconData weatherIconData;
+    String weatherImpactMessage;
 
     if (current.weatherCondition.contains("Rain")) {
+      weatherIconData = Icons.thunderstorm;
       weatherImpactMessage =
-          "Heavy rain reduces visibility and makes roads slippery. Risk level increased due to fewer pedestrians and slower traffic response.";
-      weatherImpactIcon = Icons.thunderstorm;
-      impactColor = Colors.indigo;
+          "Heavy rain reduces visibility. Risk increased due to slippery roads.";
     } else if (current.weatherCondition.contains("Humid")) {
+      weatherIconData = Icons.water_drop;
       weatherImpactMessage =
-          "High humidity can cause fatigue and dehydration, reducing alertness. Stick to well-ventilated areas and carry water.";
-      weatherImpactIcon = Icons.water_drop;
-      impactColor = Colors.cyan;
+          "High humidity may cause fatigue. Stay hydrated and alert.";
     } else if (current.weatherCondition.contains("Cloudy") ||
         current.weatherCondition.contains("Overcast")) {
+      weatherIconData = Icons.cloud;
       weatherImpactMessage =
-          "Overcast skies may reduce natural lighting earlier in the evening. Ensure your path is well-lit.";
-      weatherImpactIcon = Icons.cloud;
-      impactColor = Colors.grey;
+          "Overcast skies may reduce lighting early. Ensure your path is well-lit.";
     } else if (current.temperature > 35) {
+      weatherIconData = Icons.wb_sunny;
       weatherImpactMessage =
-          "Extreme heat can cause exhaustion. Avoid prolonged exposure and stay near shaded, populated areas.";
-      weatherImpactIcon = Icons.wb_sunny;
-      impactColor = Colors.orange;
+          "Extreme heat can cause exhaustion. Stay near shaded, populated areas.";
     } else {
+      weatherIconData = Icons.check_circle_outline;
       weatherImpactMessage =
-          "Clear conditions offer good visibility. Standard safety precautions apply.";
-      weatherImpactIcon = Icons.check_circle_outline;
-      impactColor = Colors.green;
+          "Clear conditions offer good visibility. Standard precautions apply.";
     }
 
+    // Get dynamic risk color
+    final riskColor = _getRiskColor(current.riskLevel);
+
     return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                glassColor.withValues(alpha: 0.5),
-                glassColor.withValues(alpha: 0.2),
-              ],
-            ),
+            color: glassColor.withValues(alpha: 0.6),
             border: Border.all(color: borderColor, width: 1.5),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: primaryColor.withValues(alpha: 0.15),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // --- Header: Location & Time ---
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
                 child: Row(
@@ -1191,9 +1194,10 @@ class _HomePageContentState extends State<HomePageContent> {
                         Text(
                           "Current Conditions",
                           style: TextStyle(
-                            color: primaryColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            color: textColorSub,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -1213,20 +1217,20 @@ class _HomePageContentState extends State<HomePageContent> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
+                        color: riskColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: primaryColor.withValues(alpha: 0.3),
+                          color: riskColor.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.schedule, size: 14, color: primaryColor),
+                          Icon(Icons.schedule, size: 14, color: riskColor),
                           const SizedBox(width: 6),
                           Text(
                             "Now",
                             style: TextStyle(
-                              color: primaryColor,
+                              color: riskColor,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
@@ -1237,212 +1241,136 @@ class _HomePageContentState extends State<HomePageContent> {
                   ],
                 ),
               ),
+
+              const Divider(height: 1, color: Colors.white24),
+
+              // --- Main Stats: Temp & Risk ---
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 child: Row(
                   children: [
+                    // Temperature Card
                     Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.orangeAccent.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(
-                              current.weatherIcon == 'clear'
-                                  ? Icons.wb_sunny
-                                  : current.weatherIcon == 'cloudy'
-                                  ? Icons.cloud
-                                  : current.weatherIcon == 'humidity'
-                                  ? Icons.water_drop
-                                  : Icons.thunderstorm,
-                              color: Colors.orangeAccent,
-                              size: 32,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "${current.temperature.toInt()}°C",
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: textColorMain,
-                              ),
-                            ),
-                            Text(
-                              current.weatherCondition,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: textColorSub,
-                              ),
-                            ),
-                          ],
-                        ),
+                      child: _buildStatItem(
+                        icon: weatherIconData,
+                        value: "${current.temperature.toInt()}°C",
+                        label: current.weatherCondition,
+                        color: textColorMain, // Neutral color for temp
+                        bgColor: glassColor.withValues(alpha: 0.5),
                       ),
                     ),
                     const SizedBox(width: 16),
+                    // Risk Score Card (Uses Dynamic Risk Color)
                     Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(
-                              current.riskLevel == 'Low'
-                                  ? Icons.shield
-                                  : current.riskLevel == 'Moderate'
-                                  ? Icons.warning
-                                  : Icons.error,
-                              color: primaryColor,
-                              size: 32,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "${(current.riskScore * 100).toInt()}%",
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: primaryColor,
-                              ),
-                            ),
-                            Text(
-                              "${current.riskLevel} Risk",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: primaryColor.withValues(alpha: 0.8),
-                              ),
-                            ),
-                          ],
-                        ),
+                      child: _buildStatItem(
+                        icon: current.riskLevel == 'Low'
+                            ? Icons.shield
+                            : current.riskLevel == 'Moderate'
+                            ? Icons.warning
+                            : Icons.error,
+                        value: "${(current.riskScore * 100).toInt()}%",
+                        label: "${current.riskLevel} Risk",
+                        color:
+                            riskColor, // ✅ Uses Sage/Burgundy instead of bright green
+                        bgColor: riskColor.withValues(alpha: 0.1),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+
+              const Divider(height: 1, color: Colors.white24),
+
+              // --- Weather Impact Tip ---
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: riskColor.withValues(
+                          alpha: 0.1,
+                        ), // Match tip icon to risk color
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(weatherIconData, color: riskColor, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Safety Tip",
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: textColorSub,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            weatherImpactMessage,
+                            style: TextStyle(
+                              fontSize: 13,
+                              height: 1.4,
+                              color: textColorMain,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // --- Forecast Comparison (Now vs Later) ---
+              if (next != null)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                   decoration: BoxDecoration(
-                    color: impactColor.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: impactColor.withValues(alpha: 0.2),
+                    color: Colors.black.withValues(alpha: 0.05),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(24),
+                      bottomRight: Radius.circular(24),
                     ),
                   ),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Icon(weatherImpactIcon, color: impactColor, size: 24),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              weatherImpactTitle,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: impactColor,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              weatherImpactMessage,
-                              style: TextStyle(
-                                fontSize: 13,
-                                height: 1.4,
-                                color: textColorMain,
-                              ),
-                            ),
-                          ],
-                        ),
+                      _buildMiniForecast(
+                        label: "Now",
+                        value: "${(current.riskScore * 100).toInt()}%",
+                        color: riskColor,
+                        isBold: true,
+                      ),
+                      Icon(
+                        Icons.arrow_forward,
+                        size: 16,
+                        color: textColorSub.withValues(alpha: 0.5),
+                      ),
+                      _buildMiniForecast(
+                        label: DateFormat('h a').format(next.dateTime),
+                        value: "${(next.riskScore * 100).toInt()}%",
+                        color: textColorSub,
+                        isBold: false,
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              if (next != null) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: primaryColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: primaryColor, width: 1.5),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                "Now",
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryColor,
-                                ),
-                              ),
-                              Text(
-                                "${(current.riskScore * 100).toInt()}%",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Icon(Icons.arrow_forward, size: 16, color: textColorSub),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                DateFormat('h a').format(next.dateTime),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: textColorSub,
-                                ),
-                              ),
-                              Text(
-                                "${(next.riskScore * 100).toInt()}%",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: textColorSub,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
+
+              // --- Action Button ---
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
                 child: SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -1456,10 +1384,11 @@ class _HomePageContentState extends State<HomePageContent> {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
+                      backgroundColor:
+                          riskColor, // Button matches risk level color
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shadowColor: primaryColor.withValues(alpha: 0.4),
+                      shadowColor: riskColor.withValues(alpha: 0.4),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -1487,6 +1416,80 @@ class _HomePageContentState extends State<HomePageContent> {
           ),
         ),
       ),
+    );
+  }
+
+  // ✅ Helper: Stat Item
+  Widget _buildStatItem({
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color color,
+    required Color bgColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 32, color: color),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: color.withValues(alpha: 0.8),
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ✅ Helper: Mini Forecast
+  Widget _buildMiniForecast({
+    required String label,
+    required String value,
+    required Color color,
+    required bool isBold,
+  }) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: color.withValues(alpha: 0.7),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }
