@@ -1,6 +1,8 @@
 <div align="center">
 
-<img src="docs/noor-banner.svg" alt="Noor — safety, support, and confidence for every journey" width="100%" />
+<a href="https://github.com/Dhvani30/Noor" aria-label="Open the Noor GitHub repository">
+  <img src="docs/noor-banner.svg" alt="Noor — safety, support, and confidence for every journey" width="100%" />
+</a>
 
 <br />
 
