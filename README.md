@@ -199,10 +199,6 @@ docs/
 
 ---
 
-## Team
-
-Aarushi · Dhvani · Prishita
-
 ## License
 
 Noor is available under the [MIT License](LICENSE).
