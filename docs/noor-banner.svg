@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="440" viewBox="0 0 1280 440" role="img" aria-labelledby="title desc">
+  <title id="title">Noor — Safety, support, and confidence for every journey</title>
+  <desc id="desc">A dark burgundy banner with rose and cream ribbons and a protective shield motif.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111114"/>
+      <stop offset="0.58" stop-color="#211619"/>
+      <stop offset="1" stop-color="#42191E"/>
+    </linearGradient>
+    <linearGradient id="ribbon" x1="0" y1="0" x2="1" y2="0.8">
+      <stop offset="0" stop-color="#FDECEC" stop-opacity="0.04"/>
+      <stop offset="0.52" stop-color="#FCA5A5" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#7F1D1D" stop-opacity="0.72"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#FCA5A5" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#FCA5A5" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="24"/></filter>
+  </defs>
+  <rect width="1280" height="440" rx="28" fill="url(#bg)"/>
+  <circle cx="1060" cy="216" r="200" fill="url(#glow)"/>
+  <path d="M500 385C700 240 822 446 1045 294c99-68 162-135 235-159v305H500Z" fill="url(#ribbon)" opacity=".65"/>
+  <path d="M580 440c165-106 279-46 414-141 109-76 180-148 286-173" fill="none" stroke="#FCA5A5" stroke-opacity=".24" stroke-width="2"/>
+  <path d="M606 440c146-75 251-33 389-115 117-70 193-151 285-174" fill="none" stroke="#FDECEC" stroke-opacity=".14" stroke-width="1.5"/>
+  <circle cx="1017" cy="214" r="135" fill="none" stroke="#FCA5A5" stroke-opacity=".16" stroke-width="1.5"/>
+  <circle cx="1017" cy="214" r="105" fill="none" stroke="#FDECEC" stroke-opacity=".23" stroke-width="1" stroke-dasharray="3 10"/>
+  <path d="M1017 122 1087 151v54c0 50-30 91-70 113-40-22-70-63-70-113v-54l70-29Z" fill="#7F1D1D" fill-opacity=".38" stroke="#FCA5A5" stroke-width="2.5"/>
+  <path d="M985 216l21 21 44-48" fill="none" stroke="#FDECEC" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"/>
+  <circle cx="891" cy="180" r="4" fill="#FCA5A5"/>
+  <circle cx="1134" cy="264" r="5" fill="#FDECEC" fill-opacity=".8"/>
+  <circle cx="1096" cy="112" r="3" fill="#FCA5A5" fill-opacity=".75"/>
+  <text x="86" y="104" fill="#FCA5A5" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" letter-spacing="4">PERSONAL SAFETY · FLUTTER APP</text>
+  <text x="80" y="246" fill="#FEFEFE" font-family="Georgia, 'Times New Roman', serif" font-size="116" font-weight="700" letter-spacing="5">NOOR</text>
+  <text x="88" y="296" fill="#FDECEC" font-family="Arial, Helvetica, sans-serif" font-size="24" letter-spacing=".5">Safety, support, and confidence</text>
+  <text x="88" y="330" fill="#FDECEC" font-family="Arial, Helvetica, sans-serif" font-size="24" letter-spacing=".5">for every journey.</text>
+  <rect x="88" y="365" width="116" height="3" rx="2" fill="#FCA5A5"/>
+  <text x="218" y="372" fill="#D6C4C0" font-family="Arial, Helvetica, sans-serif" font-size="13" letter-spacing="2">QUICK HELP  ·  TRUSTED CIRCLE  ·  SAFER ROUTES</text>
+</svg>

@@ -44,5 +44,20 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Secrets
+# Local environment and service configuration
 .env
+.env.*
+!.env.example
+!.env.*.example
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+/android/local.properties
+/android/key.properties
+/.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# Signing keys and certificates
+*.jks
+*.keystore
+*.p12

@@ -25,6 +25,7 @@ class _NewsPageState extends State<NewsPage> {
   List<Article> _filteredArticles = [];
   bool _isLoading = true;
   bool _isPositiveOnly = true;
+  String? _loadError;
 
   static const List<String> _positiveSignalWords = [
     'wins',
@@ -148,10 +149,12 @@ class _NewsPageState extends State<NewsPage> {
     try {
       final String apiKey = dotenv.env['NEWS_API_KEY'] ?? '';
       if (apiKey.isEmpty) {
-        if (mounted)
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('News API key missing!')),
-          );
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _loadError = 'Add NEWS_API_KEY to enable the news feed.';
+          });
+        }
         return;
       }
 
@@ -177,13 +180,16 @@ class _NewsPageState extends State<NewsPage> {
         _allArticles = articles;
         _applyFilter();
         _isLoading = false;
+        _loadError = null;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted)
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load news: $e')));
+      debugPrint('News feed request failed: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _loadError = 'News is temporarily unavailable. Pull to try again.';
+        });
+      }
     }
   }
 
@@ -377,10 +383,38 @@ class _NewsPageState extends State<NewsPage> {
                           child: ListView.builder(
                             controller: _scrollController,
                             padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                            itemCount:
-                                _filteredArticles.length +
-                                (_isFetchingMore ? 1 : 0),
+                            itemCount: _filteredArticles.isEmpty &&
+                                    !_isFetchingMore
+                                ? 1
+                                : _filteredArticles.length +
+                                    (_isFetchingMore ? 1 : 0),
                             itemBuilder: (context, index) {
+                              if (_filteredArticles.isEmpty &&
+                                  !_isFetchingMore) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 48,
+                                    horizontal: 24,
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.newspaper_outlined,
+                                        size: 40,
+                                        color: textColorSub,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        _loadError ??
+                                            'No stories match this filter yet.',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(color: textColorSub),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
                               if (index >= _filteredArticles.length) {
                                 return Padding(
                                   padding: const EdgeInsets.only(

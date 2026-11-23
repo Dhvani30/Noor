@@ -259,41 +259,60 @@ class _HomePageContentState extends State<HomePageContent> {
   void _startDangerZoneMonitoring() async {
     if (_isMonitoring) return;
     _isMonitoring = true;
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        _isMonitoring = false;
+        return;
+      }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        _isMonitoring = false;
+        return;
+      }
+
+      const LocationSettings locationSettings = LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 20,
+      );
+
+      _locationSubscription = Geolocator.getPositionStream(
+        locationSettings: locationSettings,
+      ).listen(
+        (Position position) {
+          if (_showDangerAlert) return;
+          if (_alertCooldownUntil != null &&
+              DateTime.now().isBefore(_alertCooldownUntil!)) {
+            return;
+          }
+
+          final result = _riskService.checkDangerZone(
+            position.latitude,
+            position.longitude,
+          );
+
+          if (result['isDanger'] == true) {
+            debugPrint('DANGER ZONE ENTERED: ${result['level']}');
+            setState(() {
+              _currentDangerData = result;
+              _showDangerAlert = true;
+            });
+            _showDangerNotification(result);
+          }
+        },
+        onError: (Object error) {
+          _isMonitoring = false;
+          debugPrint('Danger zone monitoring unavailable: $error');
+        },
+      );
+    } catch (error) {
+      _isMonitoring = false;
+      debugPrint('Danger zone monitoring unavailable: $error');
     }
-
-    const LocationSettings locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 20,
-    );
-
-    _locationSubscription =
-        Geolocator.getPositionStream(locationSettings: locationSettings).listen(
-          (Position position) {
-            if (_showDangerAlert) return;
-            if (_alertCooldownUntil != null &&
-                DateTime.now().isBefore(_alertCooldownUntil!))
-              return;
-
-            final result = _riskService.checkDangerZone(
-              position.latitude,
-              position.longitude,
-            );
-
-            if (result['isDanger'] == true) {
-              debugPrint('DANGER ZONE ENTERED: ${result['level']}');
-              setState(() {
-                _currentDangerData = result;
-                _showDangerAlert = true;
-              });
-              _showDangerNotification(result);
-            }
-          },
-        );
   }
 
   Future<void> _showDangerNotification(Map<String, dynamic> data) async {
@@ -698,7 +717,9 @@ class _HomePageContentState extends State<HomePageContent> {
                     crossAxisCount: 3,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    childAspectRatio: 1.0,
+                    // A slightly taller cell gives the labels room on compact
+                    // screens and with larger system font settings.
+                    childAspectRatio: 0.96,
                   ),
                   itemCount: _emergencyNumbers.length,
                   itemBuilder: (context, index) {
@@ -1125,7 +1146,7 @@ class _HomePageContentState extends State<HomePageContent> {
               children: [
                 // Icon with a subtle "glow" container behind it (optional, mimics active state)
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: color.withValues(
@@ -1134,11 +1155,11 @@ class _HomePageContentState extends State<HomePageContent> {
                   ),
                   child: Icon(
                     icon,
-                    size: 32,
+                    size: 30,
                     color: color, // Solid pink icon
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 // Title
                 Text(
                   title,
@@ -1158,7 +1179,7 @@ class _HomePageContentState extends State<HomePageContent> {
                 Text(
                   number,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     color: color, // Pink number to match theme
                     fontWeight: FontWeight.w500,
                   ),
